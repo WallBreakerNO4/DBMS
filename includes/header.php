@@ -29,6 +29,9 @@
                 <ul class="navbar-nav ms-auto">
                     <?php if(isset($_SESSION['user_id'])): ?>
                         <li class="nav-item">
+                            <a class="nav-link" href="/auth/change_password.php">修改密码</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="/auth/logout.php">退出</a>
                         </li>
                     <?php else: ?>
