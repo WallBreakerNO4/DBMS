@@ -30,6 +30,7 @@ $stmt->execute();
             <a href="stock_in.php" class="btn btn-success">商品入库</a>
             <a href="stock_out.php" class="btn btn-warning">商品出库</a>
             <a href="stock_check.php" class="btn btn-info">库存盘点</a>
+            <a href="report.php" class="btn btn-primary">库存报表</a>
         </div>
     </div>
 
@@ -64,7 +65,7 @@ $stmt->execute();
                                 <?php echo htmlspecialchars($row['type']); ?>
                             </span>
                         </td>
-                        <td><?php echo ($row['type'] == '出��' ? '-' : '+') . $row['quantity']; ?></td>
+                        <td><?php echo ($row['type'] == '出库' ? '-' : '+') . $row['quantity']; ?></td>
                         <td><?php echo $row['before_quantity']; ?></td>
                         <td><?php echo $row['after_quantity']; ?></td>
                         <td><?php echo htmlspecialchars($row['operator_name']); ?></td>
