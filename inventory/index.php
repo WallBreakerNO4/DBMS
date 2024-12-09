@@ -35,7 +35,7 @@ $stmt->execute();
 
     <div class="card mb-4">
         <div class="card-header">
-            <h5>��存记录</h5>
+            <h5>库存记录</h5>
         </div>
         <div class="card-body">
             <table class="table">
