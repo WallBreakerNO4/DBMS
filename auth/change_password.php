@@ -16,7 +16,7 @@ $db = $database->getConnection();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         // 获取当前用户信息
-        $query = "SELECT password FROM users WHERE id = :id";
+        $query = "SELECT password FROM persons WHERE id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':id', $_SESSION['user_id']);
         $stmt->execute();
@@ -32,21 +32,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("两次输入的新密码不一致");
         }
 
-        // 验证新密码长度
-        if (strlen($_POST['new_password']) < 6) {
-            throw new Exception("新密码长度不能少于6个字符");
-        }
-
         // 更新密码
         $new_password_hash = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
-        $query = "UPDATE users SET password = :password WHERE id = :id";
+        $query = "UPDATE persons 
+                 SET password = :password,
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = :id";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':password', $new_password_hash);
         $stmt->bindParam(':id', $_SESSION['user_id']);
-        
-        if ($stmt->execute()) {
-            $success = "密码修改成功！";
-        }
+        $stmt->execute();
+
+        $success = "密码修改成功！";
     } catch (Exception $e) {
         $error = $e->getMessage();
     }

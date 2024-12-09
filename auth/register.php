@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
         // 检查用户名是否已存在
-        $query = "SELECT id FROM users WHERE username = :username";
+        $query = "SELECT id FROM persons WHERE username = :username";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':username', $_POST['username']);
         $stmt->execute();
@@ -31,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("用户名已存在");
         }
         
-        // 创建用户
+        // 创建person记录
         $password_hash = password_hash($_POST['password'], PASSWORD_DEFAULT);
-        $query = "INSERT INTO users (username, password, email, role) 
+        $query = "INSERT INTO persons (username, password, email, role) 
                   VALUES (:username, :password, :email, 'supplier')";
         $stmt = $db->prepare($query);
         $stmt->bindParam(':username', $_POST['username']);
@@ -41,14 +41,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindParam(':email', $_POST['email']);
         $stmt->execute();
         
-        $user_id = $db->lastInsertId();
+        $person_id = $db->lastInsertId();
+        
+        // 创建supplier记录
+        $query = "INSERT INTO suppliers (person_id, company_name) 
+                  VALUES (:person_id, :company_name)";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':person_id', $person_id);
+        $stmt->bindParam(':company_name', $_POST['company_name']); // 需要在表单中添加这个字段
+        $stmt->execute();
         
         // 标记注册码为已使用
         $query = "UPDATE registration_codes 
-                  SET used = TRUE, used_by = :user_id, used_at = CURRENT_TIMESTAMP 
+                  SET used = TRUE, used_by = :person_id, used_at = CURRENT_TIMESTAMP 
                   WHERE id = :code_id";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(':user_id', $user_id);
+        $stmt->bindParam(':person_id', $person_id);
         $stmt->bindParam(':code_id', $code['id']);
         $stmt->execute();
         
@@ -104,6 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <label for="confirm_password" class="form-label">确认密码</label>
                             <input type="password" class="form-control" id="confirm_password" 
                                    name="confirm_password" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="company_name" class="form-label">公司名称</label>
+                            <input type="text" class="form-control" id="company_name" 
+                                   name="company_name" required>
                         </div>
 
                         <div class="d-grid gap-2">

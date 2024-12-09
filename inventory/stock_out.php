@@ -40,11 +40,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception("库存不足");
         }
 
+        // 计算新库存
+        $new_stock = $current_stock - $_POST['quantity'];
+
         // 更新商品库存
-        $new_quantity = $current_stock - $_POST['quantity'];
-        $query = "UPDATE products SET stock_quantity = :quantity WHERE id = :id";
+        $query = "UPDATE products 
+                 SET stock_quantity = :quantity,
+                     updated_at = CURRENT_TIMESTAMP 
+                 WHERE id = :id";
         $stmt = $db->prepare($query);
-        $stmt->bindParam(':quantity', $new_quantity);
+        $stmt->bindParam(':quantity', $new_stock);
         $stmt->bindParam(':id', $_POST['product_id']);
         $stmt->execute();
 
@@ -53,16 +58,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   (product_id, type, quantity, before_quantity, after_quantity, operator_id, remark) 
                   VALUES (:product_id, '出库', :quantity, :before_quantity, :after_quantity, :operator_id, :remark)";
         $stmt = $db->prepare($query);
+        
         $stmt->bindParam(':product_id', $_POST['product_id']);
         $stmt->bindParam(':quantity', $_POST['quantity']);
         $stmt->bindParam(':before_quantity', $current_stock);
-        $stmt->bindParam(':after_quantity', $new_quantity);
-        $stmt->bindParam(':operator_id', $_SESSION['user_id']);
+        $stmt->bindParam(':after_quantity', $new_stock);
+        $stmt->bindParam(':operator_id', $_SESSION['user_id']); // 使用persons表的ID
         $stmt->bindParam(':remark', $_POST['remark']);
+        
         $stmt->execute();
-
+        
         $db->commit();
-        $success = "出库操作成功！";
+        $success = "出库成功！";
     } catch (Exception $e) {
         $db->rollBack();
         $error = "出库失败: " . $e->getMessage();

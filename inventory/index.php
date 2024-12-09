@@ -14,10 +14,19 @@ $database = new Database();
 $db = $database->getConnection();
 
 // 获取库存记录
-$query = "SELECT ir.*, p.name as product_name, u.username as operator_name 
+$query = "SELECT ir.*, 
+          p.name as product_name,
+          op.username as operator_name,
+          CASE 
+            WHEN e.person_id IS NOT NULL THEN CONCAT(op.username, ' (员工)')
+            WHEN s.person_id IS NOT NULL THEN CONCAT(s.company_name, ' (供应商)')
+            WHEN op.role = 'admin' THEN CONCAT(op.username, ' (管理员)')
+          END as operator_info
           FROM inventory_records ir 
           LEFT JOIN products p ON ir.product_id = p.id 
-          LEFT JOIN users u ON ir.operator_id = u.id 
+          JOIN persons op ON ir.operator_id = op.id
+          LEFT JOIN employees e ON op.id = e.person_id
+          LEFT JOIN suppliers s ON op.id = s.person_id
           ORDER BY ir.created_at DESC 
           LIMIT 100";
 $stmt = $db->prepare($query);
@@ -35,9 +44,9 @@ $stmt->execute();
         </div>
     </div>
 
-    <div class="card mb-4">
+    <div class="card">
         <div class="card-header">
-            <h5>库存记录</h5>
+            <h3>最近库存变动记录</h3>
         </div>
         <div class="card-body">
             <table class="table">
@@ -45,10 +54,10 @@ $stmt->execute();
                     <tr>
                         <th>时间</th>
                         <th>商品</th>
-                        <th>类型</th>
-                        <th>数量变化</th>
-                        <th>变更前数量</th>
-                        <th>变更后数量</th>
+                        <th>操作类型</th>
+                        <th>变动数量</th>
+                        <th>变动前库存</th>
+                        <th>变动后库存</th>
                         <th>操作人</th>
                         <th>备注</th>
                     </tr>
@@ -56,20 +65,13 @@ $stmt->execute();
                 <tbody>
                     <?php while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
                     <tr>
-                        <td><?php echo date('Y-m-d H:i:s', strtotime($row['created_at'])); ?></td>
+                        <td><?php echo htmlspecialchars($row['created_at']); ?></td>
                         <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                        <td>
-                            <span class="badge bg-<?php 
-                                echo $row['type'] == '入库' ? 'success' : 
-                                    ($row['type'] == '出库' ? 'warning' : 'info'); 
-                            ?>">
-                                <?php echo htmlspecialchars($row['type']); ?>
-                            </span>
-                        </td>
-                        <td><?php echo ($row['type'] == '出库' ? '-' : '+') . $row['quantity']; ?></td>
-                        <td><?php echo $row['before_quantity']; ?></td>
-                        <td><?php echo $row['after_quantity']; ?></td>
-                        <td><?php echo htmlspecialchars($row['operator_name']); ?></td>
+                        <td><?php echo htmlspecialchars($row['type']); ?></td>
+                        <td><?php echo htmlspecialchars($row['quantity']); ?></td>
+                        <td><?php echo htmlspecialchars($row['before_quantity']); ?></td>
+                        <td><?php echo htmlspecialchars($row['after_quantity']); ?></td>
+                        <td><?php echo htmlspecialchars($row['operator_info']); ?></td>
                         <td><?php echo htmlspecialchars($row['remark']); ?></td>
                     </tr>
                     <?php endwhile; ?>

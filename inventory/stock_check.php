@@ -13,6 +13,15 @@ include '../includes/header.php';
 $database = new Database();
 $db = $database->getConnection();
 
+// 获取所有商品
+$query = "SELECT p.*, c.name as category_name 
+          FROM products p 
+          LEFT JOIN categories c ON p.category_id = c.id 
+          ORDER BY c.name, p.name";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // 处理表单提交
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
@@ -31,7 +40,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if ($difference != 0) {
                 // 更新商品库存
-                $query = "UPDATE products SET stock_quantity = :quantity WHERE id = :id";
+                $query = "UPDATE products 
+                         SET stock_quantity = :quantity,
+                             updated_at = CURRENT_TIMESTAMP 
+                         WHERE id = :id";
                 $stmt = $db->prepare($query);
                 $stmt->bindParam(':quantity', $actual_quantity);
                 $stmt->bindParam(':id', $product_id);
@@ -47,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt->bindParam(':quantity', abs($difference));
                 $stmt->bindParam(':before_quantity', $current_stock);
                 $stmt->bindParam(':after_quantity', $actual_quantity);
-                $stmt->bindParam(':operator_id', $_SESSION['user_id']);
+                $stmt->bindParam(':operator_id', $_SESSION['user_id']); // 使用persons表的ID
                 
                 $remark = "库存盘点: " . ($difference > 0 ? "实际库存大于系统库存" : "实际库存小于系统库存");
                 $stmt->bindParam(':remark', $remark);
@@ -63,15 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $error = "盘点失败: " . $e->getMessage();
     }
 }
-
-// 获取所有商品
-$query = "SELECT p.*, c.name as category_name 
-          FROM products p 
-          LEFT JOIN categories c ON p.category_id = c.id 
-          ORDER BY c.name, p.name";
-$stmt = $db->prepare($query);
-$stmt->execute();
-$products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container">

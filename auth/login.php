@@ -6,24 +6,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $database = new Database();
     $db = $database->getConnection();
     
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    
-    $query = "SELECT id, username, password, role FROM users WHERE username = :username";
-    $stmt = $db->prepare($query);
-    $stmt->bindParam(":username", $username);
-    $stmt->execute();
-    
-    if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        if (password_verify($password, $row['password'])) {
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role'];
-            header("Location: /index.php");
-            exit();
+    try {
+        // 从persons表查询用户
+        $query = "SELECT p.*, 
+                  CASE 
+                    WHEN e.person_id IS NOT NULL THEN 'employee'
+                    WHEN s.person_id IS NOT NULL THEN 'supplier'
+                    WHEN c.person_id IS NOT NULL THEN 'customer'
+                  END as user_type
+                  FROM persons p
+                  LEFT JOIN employees e ON p.id = e.person_id
+                  LEFT JOIN suppliers s ON p.id = s.person_id
+                  LEFT JOIN customers c ON p.id = c.person_id
+                  WHERE p.username = :username";
+        
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $_POST['username']);
+        $stmt->execute();
+        
+        if ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (password_verify($_POST['password'], $user['password'])) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+                $_SESSION['user_type'] = $user['user_type'];
+                
+                header("Location: /index.php");
+                exit();
+            }
         }
+        
+        $error = "用户名或密码错误";
+    } catch (PDOException $e) {
+        $error = "登录失败: " . $e->getMessage();
     }
-    $error = "用户名或密码错误";
 }
 
 include '../includes/header.php';
