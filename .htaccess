@@ -1,0 +1,15 @@
+# 启用重写引擎
+RewriteEngine On
+
+# 设置404错误页面
+ErrorDocument 404 /404.php
+
+# 如果请求的文件或目录不存在，重定向到404页面
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /404.php [L]
+
+# 禁止访问敏感文件
+<Files ~ "^(config|database|connection)\.php$">
+    Require all denied
+</Files> 

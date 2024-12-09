@@ -1,13 +1,14 @@
 <?php
 session_start();
 require_once '../config/database.php';
-include '../includes/header.php';
 
 // 检查用户是否登录
 if (!isset($_SESSION['user_id'])) {
     header("Location: /auth/login.php");
     exit();
 }
+
+include '../includes/header.php';
 
 $database = new Database();
 $db = $database->getConnection();

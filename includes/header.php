@@ -22,10 +22,10 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/inventory">库存管理</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/suppliers">供应商管理</a>
-                    </li>
                     <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/suppliers">供应商管理</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/admin/generate_code.php">注册码管理</a>
                         </li>
