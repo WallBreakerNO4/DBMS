@@ -33,6 +33,11 @@
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <?php if(isset($_SESSION['user_id'])): ?>
+                        <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'supplier'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/auth/profile.php">供应商资料</a>
+                            </li>
+                        <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/change_password.php">修改密码</a>
                         </li>
