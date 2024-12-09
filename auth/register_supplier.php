@@ -27,6 +27,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $db->beginTransaction();
         
+        // 在事务内重新验证注册码
+        $query = "SELECT * FROM registration_codes 
+                  WHERE code = :code AND used = 0 
+                  FOR UPDATE";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':code', $_GET['code']);
+        $stmt->execute();
+        
+        if (!$stmt->fetch()) {
+            throw new Exception("无效的注册码");
+        }
+        
+        // 检查用户名是否已存在
+        $query = "SELECT id FROM persons WHERE username = :username";
+        $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $_POST['username']);
+        $stmt->execute();
+        
+        if ($stmt->fetch()) {
+            throw new Exception("用户名已存在");
+        }
+        
         // 创建用户账号
         $query = "INSERT INTO persons (username, password, email, role) 
                  VALUES (:username, :password, :email, 'supplier')";
