@@ -2,8 +2,8 @@
 session_start();
 require_once '../config/database.php';
 
-// 检查用户是否登录
-if (!isset($_SESSION['user_id'])) {
+// 检查用户是否登录且是管理员、供应商或员工
+if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'supplier', 'employee'])) {
     header("Location: /auth/login.php");
     exit();
 }

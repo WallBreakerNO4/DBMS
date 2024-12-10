@@ -19,22 +19,24 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/products/display.php">商品展示</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/products">商品管理</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/inventory">库存管理</a>
-                    </li>
-                    <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                    <?php if(isset($_SESSION['user_id'])): ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="/suppliers">供应商管理</a>
+                            <a class="nav-link" href="/products">商品管理</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/employees">员工管理</a>
+                            <a class="nav-link" href="/inventory">库存管理</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin/generate_code.php">注册码管理</a>
-                        </li>
+                        <?php if($_SESSION['role'] === 'admin'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/suppliers">供应商管理</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/employees">员工管理</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/generate_code.php">注册码管理</a>
+                            </li>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav ms-auto">
@@ -52,7 +54,7 @@
                             <a class="nav-link" href="/auth/change_password.php">修改密码</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/auth/logout.php">退出</a>
+                            <a class="nav-link" href="/auth/logout.php">退出登录</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">

@@ -31,8 +31,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['role'] = $user['role'];
                 $_SESSION['user_type'] = $user['user_type'];
                 
-                header("Location: /index.php");
-                exit();
+                if ($stmt->execute()) {
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['username'] = $user['username'];
+                    
+                    // 根据角色跳转到不同页面
+                    if (in_array($user['role'], ['admin', 'supplier', 'employee'])) {
+                        header("Location: /inventory");
+                    } else {
+                        header("Location: /products/display.php");
+                    }
+                    exit();
+                }
             }
         }
         
