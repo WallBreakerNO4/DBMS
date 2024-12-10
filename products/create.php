@@ -42,7 +42,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindParam(':description', $_POST['description']);
         $stmt->bindParam(':price', $_POST['price']);
         $stmt->bindParam(':stock_quantity', $_POST['stock_quantity']);
-        $stmt->bindParam(':supplier_id', $_POST['supplier_id']);
+        
+        // 如果是供应商，使用当前用户ID作为supplier_id
+        if ($_SESSION['role'] === 'supplier') {
+            $supplier_id = $_SESSION['user_id'];
+        } else {
+            $supplier_id = $_POST['supplier_id'];
+        }
+        $stmt->bindParam(':supplier_id', $supplier_id);
         
         if ($stmt->execute()) {
             header("Location: index.php");
@@ -99,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" required>
                         </div>
 
+                        <?php if ($_SESSION['role'] === 'admin'): ?>
                         <div class="mb-3">
                             <label for="supplier_id" class="form-label">供应商</label>
                             <select class="form-control" id="supplier_id" name="supplier_id" required>
@@ -110,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                        <?php endif; ?>
 
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">添加商品</button>

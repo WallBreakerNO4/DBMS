@@ -39,7 +39,9 @@ $stmt->execute();
         <div>
             <a href="stock_in.php" class="btn btn-success">商品入库</a>
             <a href="stock_out.php" class="btn btn-warning">商品出库</a>
+            <?php if ($_SESSION['role'] !== 'supplier'): ?>
             <a href="stock_check.php" class="btn btn-info">库存盘点</a>
+            <?php endif; ?>
             <a href="report.php" class="btn btn-primary">库存报表</a>
         </div>
     </div>

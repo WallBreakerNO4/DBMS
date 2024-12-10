@@ -17,9 +17,21 @@ $db = $database->getConnection();
 $query = "SELECT p.*, c.name as category_name 
           FROM products p 
           LEFT JOIN categories c ON p.category_id = c.id 
-          WHERE p.stock_quantity > 0 
-          ORDER BY p.name";
+          WHERE p.stock_quantity > 0";
+
+// 如果是供应商,只显示其自己的商品
+if ($_SESSION['role'] === 'supplier') {
+    $query .= " AND p.supplier_id = :supplier_id";
+}
+
+$query .= " ORDER BY p.name";
 $stmt = $db->prepare($query);
+
+// 如果是供应商,绑定supplier_id参数
+if ($_SESSION['role'] === 'supplier') {
+    $stmt->bindParam(':supplier_id', $_SESSION['user_id']);
+}
+
 $stmt->execute();
 $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

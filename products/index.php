@@ -38,7 +38,7 @@ $stmt->execute();
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>商品管理</h2>
-        <?php if ($_SESSION['role'] === 'admin'): ?>
+        <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'supplier'): ?>
         <a href="create.php" class="btn btn-primary">添加商品</a>
         <?php endif; ?>
     </div>

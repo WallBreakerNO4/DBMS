@@ -2,9 +2,10 @@
 session_start();
 require_once '../config/database.php';
 
-// 检查用户是否登录
-if (!isset($_SESSION['user_id'])) {
-    header("Location: /auth/login.php");
+// 检查用户是否登录且不是供应商
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] === 'supplier') {
+    http_response_code(404);
+    include $_SERVER['DOCUMENT_ROOT'] . '/404.php';
     exit();
 }
 
