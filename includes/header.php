@@ -21,6 +21,16 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/products/display.php">商品展示</a>
                     </li>
+                    <?php if(isset($_SESSION['user_id']) && $_SESSION['role'] === 'customer'): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/cart">
+                                购物车 <span class="badge bg-primary" id="cartCount">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/orders">我的订单</a>
+                        </li>
+                    <?php endif; ?>
                     <?php if(isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['admin', 'supplier', 'employee'])): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/products">商品管理</a>
@@ -56,22 +66,16 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/auth/employee_profile.php">员工资料</a>
                             </li>
+                        <?php elseif(isset($_SESSION['role']) && $_SESSION['role'] === 'customer'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/auth/customer_profile.php">个人资料</a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/change_password.php">修改密码</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/logout.php">退出登录</a>
-                        </li>
-                    <?php endif; ?>
-                    <?php if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'customer'): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/cart">
-                                购物车 <span class="badge bg-primary" id="cartCount">0</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="/orders">我的订单</a>
                         </li>
                     <?php endif; ?>
                 </ul>
