@@ -17,6 +17,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
+                        <a class="nav-link" href="/products/display.php">商品展示</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="/products">商品管理</a>
                     </li>
                     <li class="nav-item">
