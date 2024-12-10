@@ -34,7 +34,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// 获取注册码列表
+// 获取分页参数
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$records_per_page = isset($_GET['per_page']) && in_array((int)$_GET['per_page'], [10, 20, 50]) ? (int)$_GET['per_page'] : 20;
+
+// 计算偏移量
+$offset = ($page - 1) * $records_per_page;
+
+// 获取总记录数
+$count_query = "SELECT COUNT(*) as total FROM registration_codes";
+$count_stmt = $db->prepare($count_query);
+$count_stmt->execute();
+$total_records = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// 计算总页数
+$total_pages = ceil($total_records / $records_per_page);
+$page = min(max(1, $page), $total_pages); // 确保页码在有效范围内
+
+// 修改查询语句,添加分页
 $query = "SELECT rc.*,
           creator.username as created_by_name,
           used_person.username as used_by_name,
@@ -43,8 +60,12 @@ $query = "SELECT rc.*,
           JOIN persons creator ON rc.created_by = creator.id
           LEFT JOIN persons used_person ON rc.used_by = used_person.id
           LEFT JOIN suppliers s ON rc.used_by = s.person_id
-          ORDER BY rc.created_at DESC";
+          ORDER BY rc.created_at DESC
+          LIMIT :limit OFFSET :offset";
+
 $stmt = $db->prepare($query);
+$stmt->bindValue(':limit', $records_per_page, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $codes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -94,10 +115,66 @@ $codes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+
+                    <!-- 分页控件 -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="d-flex align-items-center">
+                            <label class="me-2">每页显示：</label>
+                            <select class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
+                                <option value="10" <?php echo $records_per_page == 10 ? 'selected' : ''; ?>>10条</option>
+                                <option value="20" <?php echo $records_per_page == 20 ? 'selected' : ''; ?>>20条</option>
+                                <option value="50" <?php echo $records_per_page == 50 ? 'selected' : ''; ?>>50条</option>
+                            </select>
+                        </div>
+
+                        <?php if ($total_pages > 1): ?>
+                        <nav aria-label="注册码列表分页">
+                            <ul class="pagination mb-0">
+                                <!-- 首页 -->
+                                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?page=1&per_page=<?php echo $records_per_page; ?>">首页</a>
+                                </li>
+                                
+                                <!-- 上一页 -->
+                                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&per_page=<?php echo $records_per_page; ?>">上一页</a>
+                                </li>
+
+                                <!-- 页码 -->
+                                <?php
+                                $start_page = max(1, $page - 2);
+                                $end_page = min($total_pages, $page + 2);
+                                
+                                for ($i = $start_page; $i <= $end_page; $i++):
+                                ?>
+                                <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $i; ?>&per_page=<?php echo $records_per_page; ?>"><?php echo $i; ?></a>
+                                </li>
+                                <?php endfor; ?>
+
+                                <!-- 下一页 -->
+                                <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&per_page=<?php echo $records_per_page; ?>">下一页</a>
+                                </li>
+
+                                <!-- 末页 -->
+                                <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                                    <a class="page-link" href="?page=<?php echo $total_pages; ?>&per_page=<?php echo $records_per_page; ?>">末页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function changePerPage(value) {
+    window.location.href = '?page=1&per_page=' + value;
+}
+</script>
 
 <?php include '../includes/footer.php'; ?> 
