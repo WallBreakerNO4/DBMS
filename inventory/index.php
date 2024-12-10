@@ -13,6 +13,29 @@ include '../includes/header.php';
 $database = new Database();
 $db = $database->getConnection();
 
+// 获取每页显示记录数
+$allowed_records = [20, 50, 100];
+$records_per_page = isset($_GET['per_page']) && in_array((int)$_GET['per_page'], $allowed_records) 
+    ? (int)$_GET['per_page'] 
+    : 20;
+
+// 获取当前页码
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max(1, $page); // 确保页码至少为1
+
+// 计算偏移量
+$offset = ($page - 1) * $records_per_page;
+
+// 获取总记录数
+$count_query = "SELECT COUNT(*) as total FROM inventory_records";
+$count_stmt = $db->prepare($count_query);
+$count_stmt->execute();
+$total_records = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// 计算总页数
+$total_pages = ceil($total_records / $records_per_page);
+$page = min($page, $total_pages); // 确保页码不超过最大页数
+
 // 获取库存记录
 $query = "SELECT ir.*, 
           p.name as product_name,
@@ -28,8 +51,10 @@ $query = "SELECT ir.*,
           LEFT JOIN employees e ON op.id = e.person_id
           LEFT JOIN suppliers s ON op.id = s.person_id
           ORDER BY ir.created_at DESC 
-          LIMIT 100";
+          LIMIT :limit OFFSET :offset";
 $stmt = $db->prepare($query);
+$stmt->bindValue(':limit', $records_per_page, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 ?>
 
@@ -47,8 +72,16 @@ $stmt->execute();
     </div>
 
     <div class="card">
-        <div class="card-header">
-            <h3>最近库存变动记录</h3>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">最近库存变动记录</h3>
+            <div class="d-flex align-items-center">
+                <label class="me-2">每页显示：</label>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
+                    <option value="20" <?php echo $records_per_page == 20 ? 'selected' : ''; ?>>20条</option>
+                    <option value="50" <?php echo $records_per_page == 50 ? 'selected' : ''; ?>>50条</option>
+                    <option value="100" <?php echo $records_per_page == 100 ? 'selected' : ''; ?>>100条</option>
+                </select>
+            </div>
         </div>
         <div class="card-body">
             <table class="table">
@@ -79,8 +112,53 @@ $stmt->execute();
                     <?php endwhile; ?>
                 </tbody>
             </table>
+
+            <!-- 分页导航 -->
+            <?php if ($total_pages > 1): ?>
+            <nav aria-label="库存记录分页" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <!-- 首页 -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=1&per_page=<?php echo $records_per_page; ?>">首页</a>
+                    </li>
+                    
+                    <!-- 上一页 -->
+                    <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $page - 1; ?>&per_page=<?php echo $records_per_page; ?>">上一页</a>
+                    </li>
+
+                    <!-- 页码 -->
+                    <?php
+                    $start_page = max(1, $page - 2);
+                    $end_page = min($total_pages, $page + 2);
+                    
+                    for ($i = $start_page; $i <= $end_page; $i++):
+                    ?>
+                    <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $i; ?>&per_page=<?php echo $records_per_page; ?>"><?php echo $i; ?></a>
+                    </li>
+                    <?php endfor; ?>
+
+                    <!-- 下一页 -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $page + 1; ?>&per_page=<?php echo $records_per_page; ?>">下一页</a>
+                    </li>
+
+                    <!-- 末页 -->
+                    <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="?page=<?php echo $total_pages; ?>&per_page=<?php echo $records_per_page; ?>">末页</a>
+                    </li>
+                </ul>
+            </nav>
+            <?php endif; ?>
         </div>
     </div>
 </div>
+
+<script>
+function changePerPage(value) {
+    window.location.href = '?page=1&per_page=' + value;
+}
+</script>
 
 <?php include '../includes/footer.php'; ?> 
