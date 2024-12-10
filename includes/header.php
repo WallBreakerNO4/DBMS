@@ -77,6 +77,13 @@
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/logout.php">退出登录</a>
                         </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/register.php">用户注册</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/auth/login.php">用户登录</a>
+                        </li>
                     <?php endif; ?>
                 </ul>
             </div>
