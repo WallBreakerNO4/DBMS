@@ -94,21 +94,57 @@ if ($_SESSION['role'] === 'supplier') {
     // 处理表单提交
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
+            $db->beginTransaction();
+
+            // 获取当前库存
+            $query = "SELECT stock_quantity FROM products WHERE id = :id AND supplier_id = :supplier_id FOR UPDATE";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':id', $_GET['id']);
+            $stmt->bindParam(':supplier_id', $_SESSION['user_id']);
+            $stmt->execute();
+            $current_stock = $stmt->fetch(PDO::FETCH_ASSOC)['stock_quantity'];
+
+            // 计算库存变化
+            $new_stock = $_POST['stock_quantity'];
+            $difference = $new_stock - $current_stock;
+
+            // 更新商品库存
             $query = "UPDATE products 
                     SET stock_quantity = :stock_quantity 
                     WHERE id = :id AND supplier_id = :supplier_id";
             
             $stmt = $db->prepare($query);
-            
             $stmt->bindParam(':id', $_GET['id']);
-            $stmt->bindParam(':stock_quantity', $_POST['stock_quantity']);
+            $stmt->bindParam(':stock_quantity', $new_stock);
             $stmt->bindParam(':supplier_id', $_SESSION['user_id']);
             
             if ($stmt->execute()) {
+                // 记录库存变动
+                $query = "INSERT INTO inventory_records 
+                        (product_id, type, quantity, before_quantity, after_quantity, operator_id, remark) 
+                        VALUES (:product_id, :type, :quantity, :before_quantity, :after_quantity, :operator_id, :remark)";
+                $stmt = $db->prepare($query);
+                
+                $type = $difference > 0 ? '入库' : '出库';
+                $quantity = abs($difference);
+                $remark = "供应商库存调整";
+                
+                $stmt->bindParam(':product_id', $_GET['id']);
+                $stmt->bindParam(':type', $type);
+                $stmt->bindParam(':quantity', $quantity);
+                $stmt->bindParam(':before_quantity', $current_stock);
+                $stmt->bindParam(':after_quantity', $new_stock);
+                $stmt->bindParam(':operator_id', $_SESSION['user_id']);
+                $stmt->bindParam(':remark', $remark);
+                
+                $stmt->execute();
+                
+                $db->commit();
                 header("Location: index.php");
                 exit();
             }
         } catch (PDOException $e) {
+            $db->rollBack();
             $error = "更新库存失败: " . $e->getMessage();
         }
     }
