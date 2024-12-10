@@ -21,7 +21,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/products/display.php">商品展示</a>
                     </li>
-                    <?php if(isset($_SESSION['user_id'])): ?>
+                    <?php if(isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['admin', 'supplier', 'employee'])): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/products">商品管理</a>
                         </li>
