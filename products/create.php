@@ -19,11 +19,21 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// 获取供应商列表
+$query = "SELECT p.id, s.company_name 
+          FROM persons p 
+          JOIN suppliers s ON p.id = s.person_id 
+          WHERE p.role = 'supplier' 
+          ORDER BY s.company_name";
+$stmt = $db->prepare($query);
+$stmt->execute();
+$suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 // 处理表单提交
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
-        $query = "INSERT INTO products (name, category_id, description, price, stock_quantity) 
-                  VALUES (:name, :category_id, :description, :price, :stock_quantity)";
+        $query = "INSERT INTO products (name, category_id, description, price, stock_quantity, supplier_id) 
+                  VALUES (:name, :category_id, :description, :price, :stock_quantity, :supplier_id)";
         
         $stmt = $db->prepare($query);
         
@@ -32,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->bindParam(':description', $_POST['description']);
         $stmt->bindParam(':price', $_POST['price']);
         $stmt->bindParam(':stock_quantity', $_POST['stock_quantity']);
+        $stmt->bindParam(':supplier_id', $_POST['supplier_id']);
         
         if ($stmt->execute()) {
             header("Location: index.php");
@@ -86,6 +97,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="mb-3">
                             <label for="stock_quantity" class="form-label">库存数量</label>
                             <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="supplier_id" class="form-label">供应商</label>
+                            <select class="form-control" id="supplier_id" name="supplier_id" required>
+                                <option value="">请选择供应商</option>
+                                <?php foreach ($suppliers as $supplier): ?>
+                                    <option value="<?php echo $supplier['id']; ?>">
+                                        <?php echo htmlspecialchars($supplier['company_name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
 
                         <div class="d-grid gap-2">

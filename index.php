@@ -30,6 +30,7 @@ include 'includes/header.php';
         </div>
     </div>
     
+    <?php if(isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
     <div class="col-md-4">
         <div class="card">
             <div class="card-body">
@@ -39,6 +40,7 @@ include 'includes/header.php';
             </div>
         </div>
     </div>
+    <?php endif; ?>
 </div>
 
 <?php include 'includes/footer.php'; ?> 
