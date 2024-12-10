@@ -37,6 +37,10 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="/auth/profile.php">供应商资料</a>
                             </li>
+                        <?php elseif(isset($_SESSION['role']) && $_SESSION['role'] === 'employee'): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/auth/employee_profile.php">员工资料</a>
+                            </li>
                         <?php endif; ?>
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/change_password.php">修改密码</a>
