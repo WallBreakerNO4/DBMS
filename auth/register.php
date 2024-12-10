@@ -61,7 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         
         $db->commit();
-        header("Location: login.php");
+
+        // 注册成功后直接设置会话变量，实现自动登录
+        $_SESSION['user_id'] = $person_id;
+        $_SESSION['username'] = $_POST['username'];
+        $_SESSION['role'] = 'supplier';
+        $_SESSION['user_type'] = 'supplier';
+        
+        // 重定向到首页而不是登录页
+        header("Location: /index.php");
         exit();
     } catch (Exception $e) {
         $db->rollBack();
