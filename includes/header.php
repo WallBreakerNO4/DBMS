@@ -56,12 +56,15 @@
                         <li class="nav-item">
                             <a class="nav-link" href="/auth/logout.php">退出登录</a>
                         </li>
-                    <?php else: ?>
+                    <?php endif; ?>
+                    <?php if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'customer'): ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="/auth/login.php">登录</a>
+                            <a class="nav-link" href="/cart">
+                                购物车 <span class="badge bg-primary" id="cartCount">0</span>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="/auth/register.php">注册</a>
+                            <a class="nav-link" href="/orders">我的订单</a>
                         </li>
                     <?php endif; ?>
                 </ul>

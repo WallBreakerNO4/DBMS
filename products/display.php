@@ -118,13 +118,81 @@ $stmt->execute();
                         </span>
                     </div>
                 </div>
-                <div class="card-footer text-muted">
-                    <small>供应商: <?php echo htmlspecialchars($product['supplier_name'] ?? '未指定'); ?></small>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">供应商: <?php echo htmlspecialchars($product['supplier_name'] ?? '未指定'); ?></small>
+                        <?php if ($product['stock_quantity'] > 0): ?>
+                            <?php if (!isset($_SESSION['user_id'])): ?>
+                                <a href="/auth/login.php" class="btn btn-primary btn-sm">购买</a>
+                            <?php elseif ($_SESSION['role'] === 'customer'): ?>
+                                <div class="d-flex align-items-center">
+                                    <input type="number" class="form-control form-control-sm me-2" 
+                                           id="quantity_<?php echo $product['id']; ?>" 
+                                           style="width: 60px;" 
+                                           min="1" 
+                                           max="<?php echo $product['stock_quantity']; ?>" 
+                                           value="1">
+                                    <button class="btn btn-primary btn-sm" 
+                                            onclick="addToCart(<?php echo $product['id']; ?>)">
+                                        购买
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <button class="btn btn-secondary btn-sm" disabled>无货</button>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
         <?php endwhile; ?>
     </div>
+
+    <!-- 添加购物相关的JavaScript代码 -->
+    <script>
+    function addToCart(productId) {
+        const quantity = document.getElementById(`quantity_${productId}`).value;
+        
+        fetch('/cart/add_item.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                quantity: quantity
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('已添加到购物车！');
+                updateCartCount(); // 更新购物车数量显示
+            } else {
+                alert(data.message || '添加失败，请重试');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败，请重试');
+        });
+    }
+
+    // 更新购物车数量显示
+    function updateCartCount() {
+        fetch('/cart/get_count.php')
+            .then(response => response.json())
+            .then(data => {
+                const cartCount = document.getElementById('cartCount');
+                if (cartCount) {
+                    cartCount.textContent = data.count;
+                }
+            });
+    }
+
+    // 页面加载时更新购物车数量
+    document.addEventListener('DOMContentLoaded', updateCartCount);
+    </script>
 </div>
 
 <?php include '../includes/footer.php'; ?> 
