@@ -25,4 +25,58 @@ $stmt->execute();
 $suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<!-- 其余HTML代码保持不变 -->
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>供应商管理</h2>
+        <a href="/admin/generate_code.php" class="btn btn-primary">生成注册码</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <?php if (isset($success)): ?>
+                <div class="alert alert-success"><?php echo $success; ?></div>
+            <?php endif; ?>
+            
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>公司名称</th>
+                        <th>联系人</th>
+                        <th>邮箱</th>
+                        <th>电话</th>
+                        <th>地址</th>
+                        <th>注册时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($suppliers as $supplier): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($supplier['id']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['username']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['company_name']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['contact_name']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['email']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['phone']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['address']); ?></td>
+                        <td><?php echo htmlspecialchars($supplier['created_at']); ?></td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="edit.php?id=<?php echo $supplier['id']; ?>" 
+                                   class="btn btn-sm btn-primary">编辑</a>
+                                <a href="reset_password.php?id=<?php echo $supplier['id']; ?>" 
+                                   class="btn btn-sm btn-warning">重置密码</a>
+                                <a href="delete.php?id=<?php echo $supplier['id']; ?>" 
+                                   class="btn btn-sm btn-danger"
+                                   onclick="return confirm('确定要删除该供应商吗？删除后将无法恢复！')">删除</a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

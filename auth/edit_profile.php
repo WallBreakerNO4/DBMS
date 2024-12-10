@@ -29,12 +29,27 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
         $db->beginTransaction();
         
+        // 检查新用户名是否已存在（如果用户名被修改了）
+        if ($_POST['username'] !== $user['username']) {
+            $query = "SELECT id FROM persons WHERE username = :username AND id != :id";
+            $stmt = $db->prepare($query);
+            $stmt->bindParam(':username', $_POST['username']);
+            $stmt->bindParam(':id', $_SESSION['user_id']);
+            $stmt->execute();
+            
+            if ($stmt->fetch()) {
+                throw new Exception("该用户名已被使用");
+            }
+        }
+        
         // 更新persons表
         $query = "UPDATE persons 
-                 SET email = :email,
+                 SET username = :username,
+                     email = :email,
                      updated_at = CURRENT_TIMESTAMP
                  WHERE id = :id";
         $stmt = $db->prepare($query);
+        $stmt->bindParam(':username', $_POST['username']);
         $stmt->bindParam(':email', $_POST['email']);
         $stmt->bindParam(':id', $_SESSION['user_id']);
         $stmt->execute();
@@ -55,17 +70,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute();
         
         $db->commit();
-        $success = "个人信息更新成功！";
         
-        // 重新获取用户信息
-        $query = "SELECT p.*, s.*
-                  FROM persons p
-                  LEFT JOIN suppliers s ON p.id = s.person_id
-                  WHERE p.id = :id";
-        $stmt = $db->prepare($query);
-        $stmt->bindParam(':id', $_SESSION['user_id']);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        // 更新session中的用户名
+        $_SESSION['username'] = $_POST['username'];
+        
+        $success = "资料更新成功！";
     } catch (Exception $e) {
         $db->rollBack();
         $error = "更新失败: " . $e->getMessage();
@@ -78,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3>供应商资料修改</h3>
+                    <h3>编辑供应商资料</h3>
                 </div>
                 <div class="card-body">
                     <?php if (isset($success)): ?>
@@ -90,8 +99,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     <form method="POST">
                         <div class="mb-3">
-                            <label class="form-label">用户名</label>
-                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($user['username']); ?>" disabled>
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" name="username"
+                                   value="<?php echo htmlspecialchars($user['username']); ?>" required>
                         </div>
 
                         <div class="mb-3">
