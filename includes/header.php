@@ -39,6 +39,11 @@
                                 <a class="nav-link" href="/admin/generate_code.php">注册码管理</a>
                             </li>
                         <?php endif; ?>
+                        <?php if(in_array($_SESSION['role'], ['admin', 'employee'])): ?>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/admin/orders.php">订单管理</a>
+                            </li>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </ul>
                 <ul class="navbar-nav ms-auto">
