@@ -100,17 +100,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                     <form method="POST">
                         <div class="mb-3">
-                            <label for="product_id" class="form-label">选择商品</label>
-                            <select class="form-control" id="product_id" name="product_id" required>
-                                <option value="">请选择商品</option>
-                                <?php foreach ($products as $product): ?>
-                                    <option value="<?php echo $product['id']; ?>">
-                                        <?php echo htmlspecialchars($product['name']); ?> 
-                                        (<?php echo htmlspecialchars($product['category_name']); ?>) - 
-                                        当前库存: <?php echo $product['stock_quantity']; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="product_search" class="form-label">搜索商品</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="product_search" 
+                                       placeholder="输入商品名称、类别或编号搜索">
+                                <input type="hidden" id="product_id" name="product_id" required>
+                            </div>
+                            <div id="searchResults" class="list-group position-absolute" style="z-index: 1000; width: 95%;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="selected_product_info" class="form-label">已选商品信息</label>
+                            <div id="selected_product_info" class="form-control bg-light" style="height: auto;">
+                                请先搜索并选择商品
+                            </div>
                         </div>
 
                         <div class="mb-3">
@@ -133,5 +136,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
     </div>
 </div>
+
+<script>
+let searchTimeout;
+const searchInput = document.getElementById('product_search');
+const searchResults = document.getElementById('searchResults');
+const productIdInput = document.getElementById('product_id');
+const selectedProductInfo = document.getElementById('selected_product_info');
+
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    searchResults.innerHTML = '';
+    
+    if (this.value.length < 2) return;
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/api/products/search.php?search=${encodeURIComponent(this.value)}`)
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+                data.products.forEach(product => {
+                    const div = document.createElement('div');
+                    div.className = 'list-group-item list-group-item-action';
+                    div.innerHTML = `${product.name} (${product.category_name}) - 库存: ${product.stock_quantity}`;
+                    div.onclick = () => selectProduct(product);
+                    searchResults.appendChild(div);
+                });
+            });
+    }, 300);
+});
+
+function selectProduct(product) {
+    productIdInput.value = product.id;
+    searchInput.value = product.name;
+    searchResults.innerHTML = '';
+    selectedProductInfo.innerHTML = `
+        <strong>商品名称:</strong> ${product.name}<br>
+        <strong>类别:</strong> ${product.category_name}<br>
+        <strong>当前库存:</strong> ${product.stock_quantity}
+    `;
+}
+
+// 点击其他地方时隐藏搜索结果
+document.addEventListener('click', function(e) {
+    if (!searchResults.contains(e.target) && e.target !== searchInput) {
+        searchResults.innerHTML = '';
+    }
+});
+</script>
 
 <?php include '../includes/footer.php'; ?> 

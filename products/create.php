@@ -19,16 +19,6 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 获取供应商列表
-$query = "SELECT p.id, s.company_name 
-          FROM persons p 
-          JOIN suppliers s ON p.id = s.person_id 
-          WHERE p.role = 'supplier' 
-          ORDER BY s.company_name";
-$stmt = $db->prepare($query);
-$stmt->execute();
-$suppliers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 // 处理表单提交
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
@@ -109,13 +99,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <?php if ($_SESSION['role'] === 'admin'): ?>
                         <div class="mb-3">
                             <label for="supplier_id" class="form-label">供应商</label>
-                            <select class="form-control" id="supplier_id" name="supplier_id" required>
+                            <select class="form-control select2-suppliers" id="supplier_id" name="supplier_id" required>
                                 <option value="">请选择供应商</option>
-                                <?php foreach ($suppliers as $supplier): ?>
-                                    <option value="<?php echo $supplier['id']; ?>">
-                                        <?php echo htmlspecialchars($supplier['company_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
                             </select>
                         </div>
                         <?php endif; ?>
@@ -131,4 +116,42 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
-<?php include '../includes/footer.php'; ?> 
+<?php include '../includes/footer.php'; ?>
+
+<!-- 添加 Select2 相关资源 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    $('.select2-suppliers').select2({
+        placeholder: '请输入供应商名称搜索',
+        minimumInputLength: 2,
+        ajax: {
+            url: '/api/suppliers/search.php',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    search: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function (data) {
+                return {
+                    results: data.suppliers.map(function(supplier) {
+                        return {
+                            id: supplier.id,
+                            text: supplier.company_name
+                        };
+                    }),
+                    pagination: {
+                        more: data.has_more
+                    }
+                };
+            },
+            cache: true
+        }
+    });
+});
+</script> 

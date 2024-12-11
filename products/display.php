@@ -11,6 +11,13 @@ $sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'name';
 $order = isset($_GET['order']) ? $_GET['order'] : 'asc';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
+// 获取分页参数
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$records_per_page = isset($_GET['per_page']) && in_array((int)$_GET['per_page'], [12, 24, 48]) ? (int)$_GET['per_page'] : 24;
+
+// 计算偏移量
+$offset = ($page - 1) * $records_per_page;
+
 // 构建查询
 $query = "SELECT p.*, c.name as category_name, s.company_name as supplier_name
           FROM products p 
@@ -50,13 +57,41 @@ switch ($sort_by) {
         $query .= " ORDER BY p.name ASC";
 }
 
-$stmt = $db->prepare($query);
+// 获取总记录数
+$count_query = "SELECT COUNT(*) as total FROM products p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                LEFT JOIN suppliers s ON p.supplier_id = s.person_id
+                WHERE 1=1";
 
-// 绑定搜索参数
+if (!empty($search)) {
+    $count_query .= " AND (p.name LIKE :search 
+                    OR p.description LIKE :search 
+                    OR c.name LIKE :search 
+                    OR s.company_name LIKE :search)";
+}
+
+$count_stmt = $db->prepare($count_query);
 if (!empty($search)) {
     $search_param = "%{$search}%";
+    $count_stmt->bindParam(':search', $search_param);
+}
+$count_stmt->execute();
+$total_records = $count_stmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+// 计算总页数
+$total_pages = ceil($total_records / $records_per_page);
+$page = min(max(1, $page), $total_pages); // 确保页码在有效范围内
+
+// 修改主查询添加分页
+$query .= " LIMIT :limit OFFSET :offset";
+$stmt = $db->prepare($query);
+
+// 绑定所有参数
+if (!empty($search)) {
     $stmt->bindParam(':search', $search_param);
 }
+$stmt->bindValue(':limit', $records_per_page, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 
 $stmt->execute();
 ?>
@@ -148,6 +183,56 @@ $stmt->execute();
         <?php endwhile; ?>
     </div>
 
+    <!-- 分页控件 -->
+    <div class="d-flex justify-content-between align-items-center mt-4">
+        <div class="d-flex align-items-center">
+            <label class="me-2">每页显示：</label>
+            <select class="form-select form-select-sm" style="width: auto;" onchange="changePerPage(this.value)">
+                <option value="12" <?php echo $records_per_page == 12 ? 'selected' : ''; ?>>12件</option>
+                <option value="24" <?php echo $records_per_page == 24 ? 'selected' : ''; ?>>24件</option>
+                <option value="48" <?php echo $records_per_page == 48 ? 'selected' : ''; ?>>48件</option>
+            </select>
+        </div>
+
+        <?php if ($total_pages > 1): ?>
+        <nav aria-label="商品列表分页">
+            <ul class="pagination mb-0">
+                <!-- 首页 -->
+                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=1&per_page=<?php echo $records_per_page; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?><?php echo !empty($sort_by) ? '&sort=' . urlencode($sort_by) : ''; ?>">首页</a>
+                </li>
+                
+                <!-- 上一页 -->
+                <li class="page-item <?php echo $page <= 1 ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page - 1; ?>&per_page=<?php echo $records_per_page; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?><?php echo !empty($sort_by) ? '&sort=' . urlencode($sort_by) : ''; ?>">上一页</a>
+                </li>
+
+                <!-- 页码 -->
+                <?php
+                $start_page = max(1, $page - 2);
+                $end_page = min($total_pages, $page + 2);
+                
+                for ($i = $start_page; $i <= $end_page; $i++):
+                ?>
+                <li class="page-item <?php echo $i == $page ? 'active' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $i; ?>&per_page=<?php echo $records_per_page; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?><?php echo !empty($sort_by) ? '&sort=' . urlencode($sort_by) : ''; ?>"><?php echo $i; ?></a>
+                </li>
+                <?php endfor; ?>
+
+                <!-- 下一页 -->
+                <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $page + 1; ?>&per_page=<?php echo $records_per_page; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?><?php echo !empty($sort_by) ? '&sort=' . urlencode($sort_by) : ''; ?>">下一页</a>
+                </li>
+
+                <!-- 末页 -->
+                <li class="page-item <?php echo $page >= $total_pages ? 'disabled' : ''; ?>">
+                    <a class="page-link" href="?page=<?php echo $total_pages; ?>&per_page=<?php echo $records_per_page; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?><?php echo !empty($sort_by) ? '&sort=' . urlencode($sort_by) : ''; ?>">末页</a>
+                </li>
+            </ul>
+        </nav>
+        <?php endif; ?>
+    </div>
+
     <!-- 添加购物相关的JavaScript代码 -->
     <script>
     function addToCart(productId) {
@@ -192,6 +277,13 @@ $stmt->execute();
 
     // 页面加载时更新购物车数量
     document.addEventListener('DOMContentLoaded', updateCartCount);
+
+    function changePerPage(value) {
+        let url = new URL(window.location.href);
+        url.searchParams.set('page', '1');
+        url.searchParams.set('per_page', value);
+        window.location.href = url.toString();
+    }
     </script>
 </div>
 

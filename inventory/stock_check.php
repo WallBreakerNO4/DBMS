@@ -92,6 +92,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="alert alert-danger"><?php echo $error; ?></div>
     <?php endif; ?>
 
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">商品库存盘点</h5>
+                </div>
+                <div class="col">
+                    <input type="text" class="form-control" id="productSearch" 
+                           placeholder="输入商品名称、类别或编号搜索">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table" id="stockCheckTable">
+                <thead>
+                    <tr>
+                        <th>商品名称</th>
+                        <th>类别</th>
+                        <th>系统库存</th>
+                        <th>实际库存</th>
+                        <th>差异</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($products as $product): ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($product['name']); ?></td>
+                        <td><?php echo htmlspecialchars($product['category_name']); ?></td>
+                        <td class="system-quantity">
+                            <?php echo $product['stock_quantity']; ?>
+                        </td>
+                        <td>
+                            <input type="number" 
+                                   class="form-control actual-quantity" 
+                                   name="actual_quantity[<?php echo $product['id']; ?>]" 
+                                   value="<?php echo $product['stock_quantity']; ?>" 
+                                   min="0" 
+                                   required>
+                        </td>
+                        <td class="difference">0</td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <form method="POST" id="stockCheckForm">
         <div class="card">
             <div class="card-header">
@@ -169,6 +216,31 @@ document.getElementById('stockCheckForm').addEventListener('submit', function(e)
             return;
         }
     }
+});
+
+let searchTimeout;
+const productSearch = document.getElementById('productSearch');
+const stockCheckTable = document.getElementById('stockCheckTable');
+
+productSearch.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    
+    searchTimeout = setTimeout(() => {
+        const searchValue = this.value.toLowerCase();
+        const rows = stockCheckTable.getElementsByTagName('tr');
+        
+        for (let i = 1; i < rows.length; i++) { // 从1开始跳过表头
+            const row = rows[i];
+            const productName = row.cells[0].textContent.toLowerCase();
+            const categoryName = row.cells[1].textContent.toLowerCase();
+            
+            if (productName.includes(searchValue) || categoryName.includes(searchValue)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }, 300);
 });
 </script>
 
