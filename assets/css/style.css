@@ -6,4 +6,8 @@ body {
 
 .footer {
     margin-top: auto;
+}
+
+.navbar-brand img {
+    filter: brightness(0) invert(1);
 } 

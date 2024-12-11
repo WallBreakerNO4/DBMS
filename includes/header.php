@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['admin', 'supplier', 'employee'])) ? '库存管理系统' : '商品展示系统'; ?></title>
+    <link rel="icon" href="/favicon/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg">
+    <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png">
+    <link rel="manifest" href="/favicon/site.webmanifest">
+    <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="/assets/css/style.css" rel="stylesheet">
 </head>
@@ -11,6 +18,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="/">
+                <img src="/favicon/favicon.svg" alt="Logo" width="24" height="24" class="d-inline-block align-text-top me-2">
                 <?php echo (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['admin', 'supplier', 'employee'])) ? '库存管理系统' : '商品展示系统'; ?>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -68,7 +76,7 @@
                             </li>
                         <?php elseif(isset($_SESSION['role']) && $_SESSION['role'] === 'customer'): ?>
                             <li class="nav-item">
-                                <a class="nav-link" href="/auth/customer_profile.php">个人资料</a>
+                                <a class="nav-link" href="/auth/customer_profile.php">客户资料</a>
                             </li>
                         <?php endif; ?>
                         <li class="nav-item">
